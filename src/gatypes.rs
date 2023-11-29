@@ -2,6 +2,7 @@
 use rand::Rng;
 
 // Create Enum for types called SolutionType
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum SolutionType {
     Binary,
     Integer,
@@ -9,13 +10,13 @@ pub enum SolutionType {
 }
 
 
-struct Binary { 
+pub struct Binary { 
     value: i64 
 }
 
 // create a method on Binary that randomly genrates a 1 or 0 for value
-pub impl Binary {
-    fn new() -> Self {
+impl Binary {
+    pub fn new() -> Self {
         let mut rng = rand::thread_rng();
         let value: i64 = rng.gen_range(0..2);
         Binary { value }
@@ -23,8 +24,8 @@ pub impl Binary {
 }
 
 // create a method on Binary that returns the value
-pub impl Binary {
-    fn value(&self) -> i64 {
+impl Binary {
+    pub fn value(&self) -> i64 {
         self.value
     }
 }
@@ -37,8 +38,8 @@ pub struct Integer {
 }
 
 // create a method on Integer that randomly genrates a number between the lower and upper bounds
-pub impl Integer {
-    fn new(lower_bound: Option<i64>, upper_bound: Option<i64>) -> Self {
+impl Integer {
+    pub fn new(lower_bound: Option<i64>, upper_bound: Option<i64>) -> Self {
         let mut rng = rand::thread_rng();
         let value: i64 = match (lower_bound, upper_bound) {
             (Some(lower_bound), Some(upper_bound)) => rng.gen_range(lower_bound..upper_bound),
@@ -52,7 +53,7 @@ pub impl Integer {
     }
 
     // create a method on Integer that returns the value
-    fn value(&self) -> i64 {
+    pub fn value(&self) -> i64 {
         self.value
     }
 }
@@ -65,7 +66,7 @@ pub struct Real {
 
 // create a method on Real that randomly genrates a number between the lower and upper bounds
 impl Real {
-    fn new(lower_bound: Option<f64>, upper_bound: Option<f64>) -> Self {
+    pub fn new(lower_bound: Option<f64>, upper_bound: Option<f64>) -> Self {
         let mut rng = rand::thread_rng();
         let value: f64 = match (lower_bound, upper_bound) {
             (Some(lower_bound), Some(upper_bound)) => rng.gen_range(lower_bound..upper_bound),
@@ -79,7 +80,7 @@ impl Real {
     }
 
     // create a method on Real that returns the value
-    fn value(&self) -> f64 {
+    pub fn value(&self) -> f64 {
         self.value
     }
 }
