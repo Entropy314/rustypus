@@ -2,7 +2,7 @@
 use rand::Rng;
 
 // Create Enum for types called SolutionType
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum SolutionType {
     Binary,
     Integer,
@@ -41,6 +41,10 @@ pub struct Integer {
 impl Integer {
     pub fn new(lower_bound: Option<i64>, upper_bound: Option<i64>) -> Self {
         let mut rng = rand::thread_rng();
+        // if lower_bound == upper_bound panic
+        if lower_bound == upper_bound {
+            panic!("lower_bound and upper_bound cannot be equal");
+        }
         let value: i64 = match (lower_bound, upper_bound) {
             (Some(lower_bound), Some(upper_bound)) => rng.gen_range(lower_bound..upper_bound),
             (Some(lower_bound), None) => rng.gen_range(lower_bound..i64::MAX),
@@ -68,6 +72,10 @@ pub struct Real {
 impl Real {
     pub fn new(lower_bound: Option<f64>, upper_bound: Option<f64>) -> Self {
         let mut rng = rand::thread_rng();
+        // if lower_bound == upper_bound panic
+        if lower_bound == upper_bound {
+            panic!("lower_bound and upper_bound cannot be equal");
+        }
         let value: f64 = match (lower_bound, upper_bound) {
             (Some(lower_bound), Some(upper_bound)) => rng.gen_range(lower_bound..upper_bound),
             (Some(lower_bound), None) => rng.gen_range(lower_bound..f64::MAX),
@@ -126,4 +134,5 @@ mod tests {
             _ => false
         });
     }
+
 }
