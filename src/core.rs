@@ -100,7 +100,6 @@ impl Problem {
                 }
             }
         }
-        println!("Solution: {:?}", solution);
         solution
     }
 }
@@ -127,6 +126,7 @@ impl<'a> Solution<'a> {
         let evaluated = false;
         let constraint_violation = 0;
         let feasible = false;
+
         Solution {
             problem,
             solution,
@@ -168,31 +168,23 @@ impl<'a> Solution<'a> {
 
     pub fn evaluate_constraints(&mut self) -> Vec<f64> {
         let mut constraint_values: Vec<f64> = Vec::new();
-        println!("AAAAAAAAAAAAAAAAAAAAAAAAA");
         let objective_constraint = self.problem.objective_constraint();
-        println!("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
         let objective_constraint_operands = self.problem.objective_constraint_operands();
-        println!("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
-        println!("objective_constraint: {:?}", objective_constraint);
-        println!("objective_constraint_operands: {:?}", objective_constraint_operands);
+        println!("OBJECTIVE CONSTRAINT: {:?}", objective_constraint);
+        println!("OBJECTIVE CONSTRAINT OPERANDS: {:?}", objective_constraint_operands);
         if objective_constraint.is_some() && objective_constraint_operands.is_some() {
-            let objective_constraint = objective_constraint.as_ref().unwrap();
-            println!("FFFFFFFFFFFFFFFFFF");
-            println!("objective constrant length: {}", objective_constraint.len());
-            let objective_constraint_operands: &Vec<String> = objective_constraint_operands.as_ref().unwrap();
-            println!("GGGGGGGGGGGGGGGGGGGGG: {}", objective_constraint_operands.len()); 
+            let objective_constraint: &Vec<f64> = &objective_constraint.as_ref().unwrap();
+            let objective_constraint_operands: &Vec<String> = &objective_constraint_operands.as_ref().unwrap();
             for i in 0..objective_constraint.len() {
-                println!("INDEXXXXXXXXXXX: {}", i);
-                let operand = &objective_constraint_operands[i];
-                println!("OPERAND: P{:?}", operand);
-                let constraint = &objective_constraint[i];
-                println!("CONSTRAINT: {:?}", constraint);
-                println!("OBJECTIVE VALUESSSS: {:?}", self.objective_values);
-                let objective_value = self.objective_values[i];
-                println!("OBJECTIVE VALUE: {:?}", objective_value);
-                let comparison_fn = ComparisonFunctions::new();
+                let operand: &String = &objective_constraint_operands[i];
+                let constraint: &f64 = &objective_constraint[i];
+                let obj_value: &f64 = &self.objective_values[i];
+                println!("OBJ VALUE: {:?}", obj_value);
+                let comparison_fn= ComparisonFunctions::new();
+                println!("OPERAND: {:?}", operand);
                 let comparison_fn = comparison_fn.functions.get(operand).unwrap();
-                let constraint_value = comparison_fn.compare(objective_value, *constraint);
+                let constraint_value = comparison_fn.compare(*obj_value, *constraint);
+                println!("CONSTRAINT VALUE: {:?}", constraint_value);
                 constraint_values.push(constraint_value as i8 as f64);
             }
         }
@@ -201,7 +193,7 @@ impl<'a> Solution<'a> {
 
     pub fn calculate_constraint_violation(&mut self) -> usize {
         let mut constraint_violation = 0;
-        let constraint_values = self.constraint_values();
+        let constraint_values: &Vec<f64> = self.constraint_values();
         for constraint_value in constraint_values {
             if *constraint_value == 0.0 {
                 constraint_violation += 1;
@@ -220,25 +212,13 @@ impl<'a> Solution<'a> {
     }
 
     pub fn evaluate(&mut self) {
-        println!("SOLUTION: {:?}", &self.solution);
         let objective_values = (self.problem.objective_function)(&self.solution);
-        println!("OBJECTIVE VALUES: {:?}", objective_values);
-        println!("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD{:?}   ", objective_values.len());
+        self.evaluated = true;
         self.objective_values = objective_values;
+        // self.feasible = self.is_feasible();
+        // self.constraint_violation = self.calculate_constraint_violation();
+        // self.constraint_values = self.evaluate_constraints();
 
-    // pub evaluate_constraints(&mut self) -> Vec<f64> {
-
-    //     let constraint_values = self.evaluate_constraints();
-    //     println!("OBJECTIVE VALUES: {:?}", objective_values);
-    //     let evaluated = true;
-    //     let constraint_violation = self.calculate_constraint_violation();
-    //     let feasible = self.is_feasible();
-    //     println!("SELF OBJECTIVE VALUES: {:?}", self.objective_values); 
-    //     self.constraint_values = constraint_values;
-    //     self.evaluated = evaluated;
-    //     self.constraint_violation = constraint_violation;
-    //     self.feasible = feasible;
-    // }
     }
 
 }
@@ -248,7 +228,11 @@ impl<'a> Solution<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::{iter::Zip, vec};
     use super::*;
+    // import functions from benchmark_objective_functions.rs
+    use crate::benchmark_objective_functions::{simple_objective, dtlz1, dtlz2, dtlz3, dtlz4, dtlz5, dtlz6, dtlz7, xyz_objective};
+    
 
     #[test]
     fn test_problem() {
@@ -276,29 +260,7 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_solution() {
-        let problem = Problem::new(
-            3,
-            2,
-            Some(vec![10.0, 20.0]),
-            Some(vec![">".to_string(), "<".to_string()]),
-            Some(vec![-1, -1]),
-            vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
-            |solution: &Vec<f64>| {
-                let mut objective_values: Vec<f64> = Vec::new();
-                objective_values.push(solution[0] + solution[1]);
-                objective_values.push(solution[2]);
-                objective_values
-            }
-        );
-        let solution = problem.generate_solution();
-        assert_eq!(solution.len(), 3);
-    }
-
-    #[test] // Test Solution
-    fn test_solution() {
-        // TODO: FIX TEST objective function still outputs and empty vector
-        
+    fn test_problem_generate_solution() {
         let problem: Problem = Problem::new(
             3,
             2,
@@ -308,29 +270,61 @@ mod tests {
             vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
             |solution: &Vec<f64>| {
                 let mut objective_values: Vec<f64> = Vec::new();
-                println!("VECTOR: {:?}", objective_values);
                 objective_values.push(solution[0] + solution[1]);
-                println!("VECTOR: {:?}", objective_values);
-
                 objective_values.push(solution[2]);
-                println!("VECTOR: {:?}", objective_values);
-
                 objective_values
             }
-            
         );
-        let solution: Solution<'_> = Solution::new(&problem);
-        assert_eq!(solution.solution().len(), 3);
-        assert_eq!(solution.objective_values().len(), 0);
-        assert_eq!(solution.constraint_values().len(), 0);
-        assert_eq!(*solution.evaluated(), false);
-        assert_eq!(*solution.constraint_violation(), 0);
-        assert_eq!(*solution.feasible(), false);
+        let solution_vector = problem.generate_solution();
+        assert_eq!(solution_vector.len(), 3);
+    }
+
+    #[test] // Test Solution
+    fn test_solution_no_constraints() {
+        // TODO: FIX TEST objective function still outputs and empty vector
+
+        let problem: Problem = Problem {
+            solution_length: 3,
+            number_of_objectives: 2,
+            objective_constraint: Some(vec![10.0, 20.0]),
+            objective_constraint_operands: Some(vec![">".to_string(), "<".to_string()]),
+            optimizing_objective_vector: Some(vec![-1, -1]),
+            solution_type_vector: vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
+            objective_function: xyz_objective,
+        };
+        
+        let mut solution: Solution<'_> = Solution::new(&problem);
+        solution.solution = solution.problem.generate_solution();
+        solution.evaluate();
+        
+        assert_eq!(solution.evaluated, true);
+        assert_eq!(solution.solution.len(), 3);
         assert_eq!(solution.objective_values().len(), 2);
-        // assert_eq!(solution.constraint_values().len(), 2);
-        // assert_eq!(*solution.evaluated(), true);
-        // assert_eq!(*solution.constraint_violation(), 2);
-        // assert_eq!(*solution.feasible(), false);
+        assert_eq!(solution.constraint_values().len(), 0);
+    }
+    #[test]
+    fn test_solution_with_constraints_() { 
+
+        
+        let problem: Problem = Problem {
+            solution_length: 3,
+            number_of_objectives: 2,
+            objective_constraint: Some(vec![10.0, 20.0]),
+            objective_constraint_operands: Some(vec![">".to_string(), "<".to_string()]),
+            optimizing_objective_vector: Some(vec![-1, -1]),
+            solution_type_vector: vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
+            objective_function: simple_objective,
+        };
+        
+        let mut solution: Solution<'_> = Solution::new(&problem);
+        solution.solution = vec![1.0, 2.0, 3.0]; 
+        solution.evaluate();
+       
+        assert_eq!(vec![14.0, 8.0], solution.objective_values);
+        assert_eq!(true, solution.is_feasible());
+        assert_eq!(0, solution.calculate_constraint_violation());
+        
+        
     }
 
 }
