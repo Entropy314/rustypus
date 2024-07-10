@@ -1,5 +1,6 @@
 // mod types;
 mod core;
+mod dominance;
 mod gatypes; 
 mod constraints; 
 mod benchmark_objective_functions;

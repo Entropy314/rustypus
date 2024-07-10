@@ -2,7 +2,7 @@
 use rand::Rng;
 
 // Create Enum for types called SolutionType
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum SolutionType {
     Binary,
     Integer,

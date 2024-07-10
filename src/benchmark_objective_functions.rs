@@ -1,5 +1,20 @@
 use std::f64::consts::PI;
 
+pub fn parabloid_hyper_5(input: &Vec<f64>) -> Vec<f64> {
+    let offset = vec![1.0, 2.0, 3.0, 4.0, 1000.0];
+    input.iter().zip(offset)
+        .map(|(a, b)| a * a - b)
+        .collect()
+}
+
+pub fn parabloid_5(input: &Vec<f64>) -> Vec<f64> {
+    let offset = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+    let result = input.iter().zip(offset)
+            .map(|(a, b)| a * a - b)
+            .sum(); 
+    vec![result]
+    
+}
 
 pub fn simple_objective(input: &Vec<f64>) -> Vec<f64> {
     // sum of squares
@@ -120,6 +135,7 @@ mod tests {
     fn test_dtlz1() {
         let input = vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
         let result = dtlz1(&input);
+        println!("RESULT: {:?}",result);
         assert_eq!(result.len(), input.len() - 1);
         // Add specific checks based on expected results
     }
@@ -169,6 +185,28 @@ mod tests {
         let input = vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
         let result = dtlz7(&input);
         assert_eq!(result.len(), input.len());
+        // Add specific checks based on expected results
+    }
+
+    #[test]
+    fn test_parabloid() { 
+        let input = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        // let offset = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let result = parabloid_5(&input);
+        println!("RESULT: {:?}",result);
+        assert_eq!(result, vec![40.0])
+
+        // Add specific checks based on expected results
+    }
+
+    #[test]
+    fn test_hyper_parabloid() { 
+        let input = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        // let offset = vec![1.0, 2.0, 3.0, 4.0, 1000.0];
+        let result = parabloid_hyper_5(&input);
+        println!("RESULT: {:?}",result);
+        assert_eq!(result, vec![0.0, 2.0, 6.0, 12.0, -975.0])
+
         // Add specific checks based on expected results
     }
 }
