@@ -1,16 +1,27 @@
 use std::f64::consts::PI;
 
 pub fn parabloid_hyper_5(input: &Vec<f64>) -> Vec<f64> {
-    let offset = vec![1.0, 2.0, 3.0, 4.0, 1000.0];
+    let offset = vec![1.0, 2.0, 3.0, 4.0, 1234.0];
     input.iter().zip(offset)
-        .map(|(a, b)| a * a - b)
+        .map(|(a, b)| (a - b) * (a - b))
         .collect()
 }
+
+
 
 pub fn parabloid_5(input: &Vec<f64>) -> Vec<f64> {
     let offset = vec![1.0, 2.0, 3.0, 4.0, 5.0];
     let result = input.iter().zip(offset)
             .map(|(a, b)| a * a - b)
+            .sum(); 
+    vec![result]
+    
+}
+
+pub fn parabloid_5_loc(input: &Vec<f64>) -> Vec<f64> {
+    let offset = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+    let result = input.iter().zip(offset)
+            .map(|(a, b)| (a - b) * (a - b))
             .sum(); 
     vec![result]
     
@@ -205,7 +216,18 @@ mod tests {
         // let offset = vec![1.0, 2.0, 3.0, 4.0, 1000.0];
         let result = parabloid_hyper_5(&input);
         println!("RESULT: {:?}",result);
-        assert_eq!(result, vec![0.0, 2.0, 6.0, 12.0, -975.0])
+        assert_eq!(result, vec![0.0, 0.0, 0.0, 0.0, 1510441.0])
+
+        // Add specific checks based on expected results
+    }
+
+    #[test]
+    fn test_hyper_parabloid_5_loc() { 
+        let input = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        // let offset = vec![1.0, 2.0, 3.0, 4.0, 1000.0];
+        let result = parabloid_5_loc(&input);
+        println!("RESULTRR: {:?}",result);
+        // assert_eq!(result, vec![0.0, 2.0, 6.0, 12.0, -975.0])
 
         // Add specific checks based on expected results
     }

@@ -1,21 +1,26 @@
 use crate::core::{Problem, Solution};
 
+#[derive(Debug)]
+pub enum DominanceEnum  {
+    ParetoDominance,
+    EpsilonDominance, 
+    AttributeDominance
+}
+
 pub trait Dominance { 
     fn compare_solutions(&self, solution_1: &Solution, solution_2: &Solution) -> i32;
 }
 #[derive(Debug)]
-pub struct ParetoDominance<'a> {
-    pub solution_1: &'a Solution<'a>, 
-    pub solution_2: &'a Solution<'a>
-}
+pub struct ParetoDominance ;
 
-impl<'a> ParetoDominance<'a> { 
-    pub fn new(solution_1: &'a Solution, solution_2: &'a Solution) -> Self {
-        ParetoDominance { solution_1, solution_2 }
-        }     
-}
+// impl<'a> ParetoDominance<'a> { 
+//     pub fn new(solution_1: &'a Solution, solution_2: &'a Solution) -> Self {
+//         ParetoDominance { solution_1, solution_2 }
+//         }     
+// }
 
-impl<'a> Dominance for ParetoDominance<'a> {
+impl Dominance for ParetoDominance {
+
     fn compare_solutions(&self, solution_1: &Solution, solution_2: &Solution) -> i32 {
             
         let problem: &Problem = &solution_1.problem;
@@ -34,12 +39,12 @@ impl<'a> Dominance for ParetoDominance<'a> {
         }
         let mut is_solution_1_better = false;
         let mut is_solution_2_better = false;
-        println!("SOLUTION 1 OBJECTIVE VALUES FFFFF: {:?}",solution_1.objective_values);  
-        println!("SOLUTION 2 OBJECTIVE VALUES FFFFF: {:?}",solution_2.objective_values);
+        println!("SOLUTION 1 OBJECTIVE VALUES FFFFF: {:?}",solution_1.objective_fitness_values);  
+        println!("SOLUTION 2 OBJECTIVE VALUES FFFFF: {:?}",solution_2.objective_fitness_values);
         for _i in range_iter { 
             println!("INDEX {:?}", _i); 
-            let mut obj_1: f64 = solution_1.objective_values[_i]; 
-            let mut obj_2 = solution_2.objective_values[_i]; 
+            let mut obj_1: f64 = solution_1.objective_fitness_values[_i]; 
+            let mut obj_2 = solution_2.objective_fitness_values[_i]; 
             println!("OBJ 1 {:?}", obj_1);
             println!("OBJ 2 {:?}", obj_2);
 
@@ -78,16 +83,37 @@ impl<'a> Dominance for ParetoDominance<'a> {
     }
 }
 
+// pub struct AttributeDominance<'a> { 
+//     larger_preferred: bool, 
+//     solution_1: &'a Solution<'a>,
+//     solution_2: &'a Solution<'a>
+
+// }
+
+// impl<'a> AttributeDominance<'a> { 
+//     pub fn new(larger_preferred: bool, solution_1: &'a Solution, solution_2: &'a Solution) -> Self {
+//         AttributeDominance { larger_preferred, solution_1, solution_2 }
+//     }
+// }
+
+// impl<'a> Dominance for AttributeDominance<'a> {
+
+//     fn compare_solutions(&self, solution_1: &Solution, solution_2: &Solution) -> i32 {
+        
+//     }
+
+
+// }
 // enum EpsilonEnum { 
 //     Single(f64),
 //     Multi(Vec<f64>)
 // }
 
-pub struct EpsilonDominance<'a> {
-    pub solution_1: &'a Solution<'a>, 
-    pub solution_2: &'a Solution<'a>,
-    pub epsilon: Vec<f64>
-}
+// pub struct EpsilonDominance<'a> {
+//     pub solution_1: &'a Solution<'a>, 
+//     pub solution_2: &'a Solution<'a>,
+//     pub epsilon: Vec<f64>
+// }
 
 // impl<'a> EpsilonDominance<'a> { 
 //     pub fn new(solution_1: &'a Solution, solution_2: &'a Solution, epsilon:  Vec<f64>) -> Self {
@@ -115,14 +141,14 @@ pub struct EpsilonDominance<'a> {
 //         let mut is_solution_1_better = false;
 //         let mut is_solution_2_better = false;
 //         for _i in range_iter { 
-//             let obj_1 = &solution_1.objective_values[_i];
-//             let obj_2 = &solution_2.objective_values[_i];
+//             let obj_1 = &solution_1.objective_fitness_values[_i];
+//             let obj_2 = &solution_2.objective_fitness_values[_i];
 
 //             let mut obj_1_value: f64 = *obj_1;
 //             let mut obj_2_value: f64 = *obj_2;
 //             println!("EPSILON INDEX {:?}", _i); 
-//             let obj_1: &f64 = &solution_1.objective_values[_i]; 
-//             let obj_2 = &solution_2.objective_values[_i]; 
+//             let obj_1: &f64 = &solution_1.objective_fitness_values[_i]; 
+//             let obj_2 = &solution_2.objective_fitness_values[_i]; 
 //             println!("EPSILON OBJ 1 {:?}", obj_1);
 //             println!("EPSILON OBJ 2 {:?}", obj_2);
 
@@ -189,14 +215,14 @@ pub struct EpsilonDominance<'a> {
 //         let mut is_solution_1_better = false;
 //         let mut is_solution_2_better = false;
 //         for _i in range_iter { 
-//             let obj_1 = &solution_1.objective_values[_i];
-//             let obj_2 = &solution_2.objective_values[_i];
+//             let obj_1 = &solution_1.objective_fitness_values[_i];
+//             let obj_2 = &solution_2.objective_fitness_values[_i];
 
 //             let mut obj_1_value: f64 = *obj_1;
 //             let mut obj_2_value: f64 = *obj_2;
 //             println!("EPSILON INDEX {:?}", _i); 
-//             let obj_1: &f64 = &solution_1.objective_values[_i]; 
-//             let obj_2 = &solution_2.objective_values[_i]; 
+//             let obj_1: &f64 = &solution_1.objective_fitness_values[_i]; 
+//             let obj_2 = &solution_2.objective_fitness_values[_i]; 
 //             println!("EPSILON OBJ 1 {:?}", obj_1);
 //             println!("EPSILON OBJ 2 {:?}", obj_2);
 
@@ -231,14 +257,14 @@ pub struct EpsilonDominance<'a> {
 //             let mut dist_2: f64 = 0.0;
 
 //             for _i in range_iter { 
-//                 let obj_1 = &solution_1.objective_values[_i];
-//                 let obj_2 = &solution_2.objective_values[_i];
+//                 let obj_1 = &solution_1.objective_fitness_values[_i];
+//                 let obj_2 = &solution_2.objective_fitness_values[_i];
 
 //                 let mut obj_1_value: f64 = *obj_1;  
 //                 let mut obj_2_value: f64 = *obj_2;
 //                 println!("EPSILON INDEX {:?}", _i); 
-//                 let obj_1: &f64 = &solution_1.objective_values[_i]; 
-//                 let obj_2 = &solution_2.objective_values[_i]; 
+//                 let obj_1: &f64 = &solution_1.objective_fitness_values[_i]; 
+//                 let obj_2 = &solution_2.objective_fitness_values[_i]; 
 //                 println!("EPSILON OBJ 1 {:?}", obj_1);
 //                 println!("EPSILON OBJ 2 {:?}", obj_2);
 
@@ -265,13 +291,6 @@ pub struct EpsilonDominance<'a> {
 
 //     }
 // }
-
-
-pub struct AttributeDominance<'a> {
-    pub solution_1: &'a Solution<'a>, 
-    pub solution_2: &'a Solution<'a>,
-    pub attributes: Vec<f64>
-}
     
 
 
@@ -280,7 +299,7 @@ pub struct AttributeDominance<'a> {
 mod tests {
     use super::*;
     use crate::core::{Problem, Solution};
-    use crate::gatypes::SolutionType;
+    use crate::gatypes::SolutionDataTypes;
     use crate::benchmark_objective_functions::{parabloid_5, parabloid_hyper_5};
     // Create Problem
    
@@ -294,27 +313,27 @@ mod tests {
             objective_constraint: Some(vec![Some(10.0)]),
             objective_constraint_operands: Some(vec![Some("<".to_string())]),
             direction: Some(vec![1]),
-            solution_data_type: vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
+            solution_data_types: vec![SolutionDataTypes::new_binary(None), SolutionDataTypes::new_real(Some(1.), Some(0.), Some(100.))],
             objective_function: parabloid_5
         };
         let solution_vector1:Vec<f64> = vec![1.0, 2.0, -3.0, 4.0, 5.0];
         let solution_vector2:Vec<f64> = vec![12.0, 10.0, -3.0, 4.0, 5.0];
 
         let mut solution_1 = Solution {problem: &problem, solution: solution_vector1, 
-                                                objective_values: Vec::with_capacity(*problem.number_of_objectives()), 
+                                                objective_fitness_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_violation: 0, feasible: false, evaluated: false}; 
         let mut solution_2 = Solution {problem: &problem, solution: solution_vector2, 
-                                                objective_values: Vec::with_capacity(*problem.number_of_objectives()), 
+                                                objective_fitness_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_violation: 0, feasible: false, evaluated: false}; 
 
         // Evaluate Solutions
         solution_1.evaluate();
         solution_2.evaluate();
-        let pareto_dominance: ParetoDominance = ParetoDominance::new(&solution_1, &solution_2);
+        
         // print pareto dominance values
-        let result = pareto_dominance.compare_solutions(&solution_1, &solution_2); 
+        let result = ParetoDominance.compare_solutions(&solution_1, &solution_2); 
         println!("LLLL PARETO  {:?}  dddd", result);
 
         // assert_eq!(pareto_dominance.compare_solutions(&solution_1, &solution_2), -1);
@@ -330,27 +349,26 @@ mod tests {
             objective_constraint: Some(vec![Some(10.0)]),
             objective_constraint_operands: Some(vec![Some("<".to_string())]),
             direction: Some(vec![-1]),
-            solution_data_type: vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
+            solution_data_types: vec![SolutionDataTypes::new_binary(None), SolutionDataTypes::new_real(Some(1.), Some(0.), Some(100.))],
             objective_function: parabloid_5
         };
         let solution_vector1:Vec<f64> = vec![1.0, 2.0, -3.0, 4.0, 5.0];
         let solution_vector2:Vec<f64> = vec![12.0, 10.0, -3.0, 4.0, 5.0];
 
         let mut solution_1 = Solution {problem: &problem, solution: solution_vector1, 
-                                                objective_values: Vec::with_capacity(*problem.number_of_objectives()), 
+                                                objective_fitness_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_violation: 0, feasible: false, evaluated: false}; 
         let mut solution_2 = Solution {problem: &problem, solution: solution_vector2, 
-                                                objective_values: Vec::with_capacity(*problem.number_of_objectives()), 
+                                                objective_fitness_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_violation: 0, feasible: false, evaluated: false}; 
 
         // Evaluate Solutions
         solution_1.evaluate();
         solution_2.evaluate();
-        let pareto_dominance: ParetoDominance = ParetoDominance::new(&solution_1, &solution_2);
         // print pareto dominance values
-        let result = pareto_dominance.compare_solutions(&solution_1, &solution_2); 
+        let result = ParetoDominance.compare_solutions(&solution_1, &solution_2); 
         println!("LLLL PARETO  {:?}  dddd", result);
 
         // assert_eq!(pareto_dominance.compare_solutions(&solution_1, &solution_2), -1);
@@ -366,28 +384,27 @@ mod tests {
             objective_constraint: Some(vec![Some(50.0), Some(60.0), Some(70.0), Some(80.0), Some(90.0)]),
             objective_constraint_operands: Some(vec![Some("<".to_string()), Some("<".to_string()), Some("<".to_string()), Some("<".to_string()), Some("<".to_string())], ),
             direction: Some(vec![1, 1, 1, 1, 1]),
-            solution_data_type: vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real, SolutionType::Real, SolutionType::Real],
+            solution_data_types: vec![SolutionDataTypes::new_binary(None), SolutionDataTypes::new_real(Some(1.), Some(0.), Some(100.))],
             objective_function: parabloid_hyper_5
         };
         let solution_vector1:Vec<f64> = vec![1.0, 2.0, -3.0, 4.0, 5.0];
         let solution_vector2:Vec<f64> = vec![12.0, 10.0, -3.0, 4.0, 5.0];
 
         let mut solution_1 = Solution {problem: &problem, solution: solution_vector1, 
-                                                objective_values: Vec::with_capacity(*problem.number_of_objectives()), 
+                                                objective_fitness_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_violation: 0, feasible: false, evaluated: false}; 
         let mut solution_2 = Solution {problem: &problem, solution: solution_vector2, 
-                                                objective_values: Vec::with_capacity(*problem.number_of_objectives()), 
+                                                objective_fitness_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_violation: 0, feasible: false, evaluated: false}; 
 
         // Evaluate Solutions
         solution_1.evaluate();
         solution_2.evaluate();
-        println!("SOLUTION 1 OBJECTIVE VALUES: {:?}",solution_1.objective_values);
-        let pareto_dominance: ParetoDominance = ParetoDominance::new(&solution_1, &solution_2);
+        println!("SOLUTION 1 OBJECTIVE VALUES: {:?}",solution_1.objective_fitness_values);
         // print pareto dominance values
-        let result = pareto_dominance.compare_solutions(&solution_1, &solution_2); 
+        let result = ParetoDominance.compare_solutions(&solution_1, &solution_2); 
         println!("LLLL PARETO  {:?}  dddd", result);
 
         // assert_eq!(pareto_dominance.compare_solutions(&solution_1, &solution_2), -1);
@@ -405,30 +422,28 @@ mod tests {
             objective_constraint: Some(vec![Some(50.0), None, Some(70.0), Some(80.0), Some(90.0)]),
             objective_constraint_operands: Some(vec![Some("<".to_string()), None, Some("<".to_string()), Some("<".to_string()), Some("<".to_string())], ),
             direction: Some(vec![1, 1, 1, 1, 1]),
-            solution_data_type: vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real, SolutionType::Real, SolutionType::Real],
+            solution_data_types: vec![SolutionDataTypes::new_binary(None), SolutionDataTypes::new_real(Some(1.), Some(0.), Some(100.))],
             objective_function: parabloid_hyper_5
         };
         let solution_vector1:Vec<f64> = vec![1.0, 2.0, -3.0, 4.0, 5.0];
         let solution_vector2:Vec<f64> = vec![12.0, 10.0, -3.0, 4.0, 5.0];
 
         let mut solution_1 = Solution {problem: &problem, solution: solution_vector1, 
-                                                objective_values: Vec::with_capacity(*problem.number_of_objectives()), 
+                                                objective_fitness_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_violation: 0, feasible: false, evaluated: false}; 
         let mut solution_2 = Solution {problem: &problem, solution: solution_vector2, 
-                                                objective_values: Vec::with_capacity(*problem.number_of_objectives()), 
+                                                objective_fitness_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_values: Vec::with_capacity(*problem.number_of_objectives()), 
                                                 constraint_violation: 0, feasible: false, evaluated: false}; 
 
         // Evaluate Solutions
         solution_1.evaluate();
         solution_2.evaluate();
-        println!("SOLUTION 1 OBJECTIVE VALUES: {:?}",solution_1.objective_values);
-        let pareto_dominance: ParetoDominance = ParetoDominance::new(&solution_1, &solution_2);
+        println!("SOLUTION 1 OBJECTIVE VALUES: {:?}",solution_1.objective_fitness_values);
         // print pareto dominance values
-        let result = pareto_dominance.compare_solutions(&solution_1, &solution_2); 
+        let result = ParetoDominance.compare_solutions(&solution_1, &solution_2); 
         println!("LLLL PARETO  {:?}  dddd", result);
-
         // assert_eq!(pareto_dominance.compare_solutions(&solution_1, &solution_2), -1);
     }
 

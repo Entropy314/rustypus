@@ -1,21 +1,18 @@
-// import SolutionTypes, Binary, Integer, Real from  gatypes.rs
-use crate::gatypes::{SolutionType, Binary, Integer, Real};
+// import SolutionTypes, BitBinary, Integer, Real from  gatypes.rs
+// use crate::gatypes::{SolutionType, BitBinary, Integer, Real};
 use crate::constraints::ComparisonFunctions;
 
+use crate::gatypes::SolutionDataTypes;
+use crate::gatypes::{BitBinary, Integer, Real};
 #[derive(Debug)]
 pub struct Problem {
     pub solution_length: usize,
     pub number_of_objectives: usize,
-    // Upper or Lower bound for the objective function
-    pub objective_constraint: Option<Vec<Option<f64>>>, // [10, 20]
-    // Operands for Greater than or less than the objective constraint
-    pub objective_constraint_operands: Option<Vec<Option<String>>>, // ["<", ">"]
-    // Defaults vector to -1 with length of number_of_objectives
-    pub direction: Option<Vec<i8>>, // [-1, -1]
-    // solution type is a vector of the solution types
-    pub solution_data_type: Vec<SolutionType>, // [Binary, Integer(lower_bound:Some(10), upper_bound:Some(20)), Real(lower_bound:Some(1.0), upper_bound:Some(20.0))]
-    // Objective function that takes the SolutionTypes vector values and returns a vector of f64 values
-    pub objective_function: fn(solution: &Vec<f64>) -> Vec<f64>
+    pub objective_constraint: Option<Vec<Option<f64>>>, // Upper or Lower bound for the objective function eg. [10, 20]
+    pub objective_constraint_operands: Option<Vec<Option<String>>>, // Operands for Greater than or less than the objective constraint eg. ["<", ">"]
+    pub direction: Option<Vec<i8>>, // Defaults vector to -1 with length of number_of_objectives eg. [-1, -1]
+    pub solution_data_types: Vec<SolutionDataTypes>,     // solution type is a vector of the solution types eg. [BitBinary, Integer(lower_bound:Some(10), upper_bound:Some(20)), Real(lower_bound:Some(1.0), upper_bound:Some(20.0))]
+    pub objective_function: fn(solution: &Vec<f64>) -> Vec<f64> // Objective function that takes the SolutionTypes vector values and returns a vector of f64 values
 }
 
 impl Problem {
@@ -25,12 +22,12 @@ impl Problem {
         objective_constraint: Option<Vec<Option<f64>>>, //number_of_objectives
         objective_constraint_operands: Option<Vec<Option<String>>>, //number_of_objectives
         direction: Option<Vec<i8>>,
-        solution_data_type: Vec<SolutionType>,
+        solution_data_types: Vec<SolutionDataTypes>,// Vec of Binary or Integer or Real
         objective_function: fn(&Vec<f64>) -> Vec<f64>
     ) -> Self {
-        // If solution_length != solution_data_type.len() panic
-        if solution_length != solution_data_type.len() {
-            panic!("solution_length does not match solution_data_type length");
+        // If solution_length != solution_data_types.len() panic
+        if solution_length != solution_data_types.len() {
+            panic!("solution_length does not match solution_data_types length");
         }
 
         // Check if lengths match number_of_objectives
@@ -60,7 +57,7 @@ impl Problem {
             objective_constraint,
             objective_constraint_operands,
             direction,
-            solution_data_type,
+            solution_data_types,
             objective_function
         }
     }
@@ -97,8 +94,8 @@ impl Problem {
         &self.direction
     }
 
-    pub fn solution_data_type(&self) -> &Vec<SolutionType> {
-        &self.solution_data_type
+    pub fn solution_data_type(&self) -> &Vec<SolutionDataTypes> {
+        &self.solution_data_types
     }
 
     pub fn objective_function(&self) -> &fn(&Vec<f64>) -> Vec<f64> {
@@ -111,19 +108,19 @@ impl Problem {
         let real_upper_bound: f64 = 20.0;
         let integer_lower_bound: i64 = 10;
         let integer_upper_bound: i64 = 20;
-        for solution_type in &self.solution_data_type {
+        for solution_type in &self.solution_data_types {
             match solution_type {
-                SolutionType::Binary => {
-                    let binary = Binary::new();
-                    solution.push(binary.value() as f64);
+                SolutionDataTypes::BitBinary(ref b) => {
+                    let binary: BitBinary = BitBinary::new(None);
+                    solution.push(binary.value().unwrap() as f64);
                 }
-                SolutionType::Integer => {
-                    let integer = Integer::new(Some(integer_lower_bound), Some(integer_upper_bound));
-                    solution.push(integer.value() as f64);
+                SolutionDataTypes::Integer(ref i) => {
+                    let integer: Integer = Integer::new(None, Some(integer_lower_bound), Some(integer_upper_bound));
+                    solution.push(integer.value().unwrap() as f64);
                 }
-                SolutionType::Real => {
-                    let real = Real::new(Some(real_lower_bound), Some(real_upper_bound));
-                    solution.push(real.value());
+                SolutionDataTypes::Real(ref r) => {
+                    let real = Real::new(None, Some(real_lower_bound), Some(real_upper_bound));
+                    solution.push(real.value().unwrap());
                 }
             }
         }
@@ -134,8 +131,8 @@ impl Problem {
 #[derive(Debug)]
 pub struct Solution<'a> { 
     pub problem: &'a Problem,
-    pub solution: Vec<f64>, // Derived from Problem.solution_data_type
-    pub objective_values: Vec<f64>,
+    pub solution: Vec<f64>, // Derived from Problem.solution_data_types
+    pub objective_fitness_values: Vec<f64>,
     pub constraint_values: Vec<f64>,
     pub evaluated: bool, // default false
     pub constraint_violation: usize, // default 0
@@ -147,7 +144,7 @@ impl<'a> Solution<'a> {
     pub fn new(problem: &'a Problem) -> Self {
         let solution = problem.generate_solution();
         // create vectore of length number_of_objectives
-        let objective_values: Vec<f64> = Vec::with_capacity(*problem.number_of_objectives());
+        let objective_fitness_values: Vec<f64> = Vec::with_capacity(*problem.number_of_objectives());
         let constraint_values: Vec<f64> = Vec::with_capacity(*problem.number_of_objectives());
         let evaluated = false;
         let constraint_violation = 0;
@@ -156,7 +153,7 @@ impl<'a> Solution<'a> {
         Solution {
             problem,
             solution,
-            objective_values,
+            objective_fitness_values,
             constraint_values,
             evaluated,
             constraint_violation,
@@ -172,8 +169,8 @@ impl<'a> Solution<'a> {
         &self.solution
     }
 
-    pub fn objective_values(&self) -> &Vec<f64> {
-        &self.objective_values
+    pub fn objective_fitness_values(&self) -> &Vec<f64> {
+        &self.objective_fitness_values
     }
 
     pub fn constraint_values(&self) -> &Vec<f64> {
@@ -204,7 +201,7 @@ impl<'a> Solution<'a> {
             for _i in 0..objective_constraint.len() {
                 let operand: &Option<String> = &objective_constraint_operands[_i];
                 let constraint: &Option<f64> = &objective_constraint[_i];
-                let obj_value: &f64 = &self.objective_values[_i];
+                let obj_value: &f64 = &self.objective_fitness_values[_i];
                 // println!("OBJ VALUE: {:?}", obj_value);
                 let comparison_fn= ComparisonFunctions::new();// operand.as_ref().unwrap();
                 // println!("OPERAND: {:?}", operand);
@@ -238,10 +235,10 @@ impl<'a> Solution<'a> {
     }
 
     pub fn evaluate(&mut self) {
-        let objective_values = (self.problem.objective_function)(&self.solution);
+        let objective_fitness_values = (self.problem.objective_function)(&self.solution);
         self.evaluated = true;
-        self.objective_values = objective_values;
-        // self.feasible = self.is_feasible();
+        self.objective_fitness_values = objective_fitness_values;
+        self.feasible = self.is_feasible();
         // self.constraint_violation = self.calculate_constraint_violation();
         // self.constraint_values = self.evaluate_constraints();
 
@@ -250,13 +247,15 @@ impl<'a> Solution<'a> {
 }
 
 
+
 // Write Unit Tests
 
 #[cfg(test)]
 mod tests {
     use std::vec;
-    use super::*;
+    use crate::gatypes::{SolutionDataTypes, BitBinary, Integer, Real};
     // import functions from benchmark_objective_functions.rs
+    use crate::core::{Problem, Solution};
     use crate::benchmark_objective_functions::{simple_objective, dtlz1, dtlz2, dtlz3, dtlz4, dtlz5, dtlz6, dtlz7, xyz_objective};
     #[test]
     fn test() { 
@@ -265,6 +264,15 @@ mod tests {
         for _i in 0..*b { 
             println!("Hello World: {:?}", _i);
         }
+        // Create BitBinary and Real Solution Types
+        let binary = BitBinary::new(None);
+        let integer: Integer = Integer::new(None, Some(10), Some(20));
+        let real = Real::new(None, Some(10.0), Some(20.0));
+        println!("{:?}", integer);
+        println!("{:?}", binary);
+        println!("{:?}", real);
+
+
     }
 
     #[test]
@@ -275,12 +283,12 @@ mod tests {
             Some(vec![Some(10.0), Some(20.0)]),
             Some(vec![Some(">".to_string()), Some("<".to_string())]),
             Some(vec![-1, -1]),
-            vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
+            vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
             |solution: &Vec<f64>| {
-                let mut objective_values: Vec<f64> = Vec::new();
-                objective_values.push(solution[0] + solution[1]);
-                objective_values.push(solution[2]);
-                objective_values
+                let mut objective_fitness_values: Vec<f64> = Vec::new();
+                objective_fitness_values.push(solution[0] + solution[1]);
+                objective_fitness_values.push(solution[2]);
+                objective_fitness_values
             }
         );
         assert_eq!(*problem.solution_length(), 3);
@@ -288,8 +296,20 @@ mod tests {
         assert_eq!(*problem.objective_constraint(), Some(vec![Some(10.0), Some(20.0)]));
         assert_eq!(*problem.objective_constraint_operands(), Some(vec![Some(">".to_string()), Some("<".to_string())]));
         assert_eq!(*problem.direction(), Some(vec![-1, -1]));
-        // assert_eq!(*problem.solution_data_type(), vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real]);
+        // assert_eq!(*problem.solution_data_types(), vec![SolutionType::BitBinary, SolutionType::Integer, SolutionType::Real]);
         assert_eq!(*problem.objective_function()(&vec![1.0, 2.0, 3.0]), vec![3.0, 3.0]);
+    }
+
+    #[test]
+    fn test_types_are_good() { 
+        let bin = BitBinary::new(None);
+        let int: Integer = Integer::new(None, Some(10), Some(20));
+        let real: Real = Real::new(None, Some(10.0), Some(20.0));
+        println!("{:?}", bin.value());
+        println!("{:?}", int.value());
+        println!("{:?}", real.value());
+        
+
     }
 
     #[test]
@@ -300,15 +320,16 @@ mod tests {
             Some(vec![Some(10.0), Some(20.0)]),
             Some(vec![Some(">".to_string()), Some("<".to_string())]),
             Some(vec![-1, -1]),
-            vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
+            vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
             |solution: &Vec<f64>| {
-                let mut objective_values: Vec<f64> = Vec::new();
-                objective_values.push(solution[0] + solution[1]);
-                objective_values.push(solution[2]);
-                objective_values
+                let mut objective_fitness_values: Vec<f64> = Vec::new();
+                objective_fitness_values.push(solution[0] + solution[1]);
+                objective_fitness_values.push(solution[2]);
+                objective_fitness_values
             }
         );
         let solution_vector = problem.generate_solution();
+        println!("SOLUTION VECTOR: {:?}", solution_vector);
         assert_eq!(solution_vector.len(), 3);
     }
 
@@ -322,7 +343,7 @@ mod tests {
             objective_constraint: Some(vec![Some(10.0), Some(20.0)]),
             objective_constraint_operands: Some(vec![Some(">".to_string()), Some("<".to_string())]),
             direction: Some(vec![-1, -1]),
-            solution_data_type: vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
+            solution_data_types: vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
             objective_function: xyz_objective,
         };
         
@@ -332,7 +353,7 @@ mod tests {
         
         assert_eq!(solution.evaluated, true);
         assert_eq!(solution.solution.len(), 3);
-        assert_eq!(solution.objective_values().len(), 2);
+        assert_eq!(solution.objective_fitness_values().len(), 2);
         assert_eq!(solution.constraint_values().len(), 0);
     }
     #[test]
@@ -345,7 +366,7 @@ mod tests {
             objective_constraint: Some(vec![Some(10.0), Some(20.0)]),
             objective_constraint_operands: Some(vec![Some(">".to_string()), Some("<".to_string())]),
             direction: Some(vec![-1, -1]),
-            solution_data_type: vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
+            solution_data_types: vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
             objective_function: simple_objective,
         };
         
@@ -353,7 +374,7 @@ mod tests {
         solution.solution = vec![1.0, 2.0, 3.0]; 
         solution.evaluate();
        
-        assert_eq!(vec![14.0, 8.0], solution.objective_values);
+        assert_eq!(vec![14.0, 8.0], solution.objective_fitness_values);
         assert_eq!(true, solution.is_feasible());
         assert_eq!(0, solution.calculate_constraint_violation());        
     }
@@ -368,7 +389,7 @@ mod tests {
             objective_constraint: Some(vec![Some(10.0), Some(20.0)]),
             objective_constraint_operands: Some(vec![Some(">".to_string()), Some("<".to_string())]),
             direction: Some(vec![-1, -1]),
-            solution_data_type: vec![SolutionType::Binary, SolutionType::Integer, SolutionType::Real],
+            solution_data_types: vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
             objective_function: dtlz1
         };
         
@@ -376,10 +397,28 @@ mod tests {
         solution.solution = vec![1.0, 2.0, 3.0, -4.0, -5.0]; 
         solution.evaluate();
         
-        assert_eq!(vec![-12.0, 3.0, 1.0, 0.5], solution.objective_values);
+        assert_eq!(vec![-12.0, 3.0, 1.0, 0.5], solution.objective_fitness_values);
         assert_eq!(true, solution.is_feasible());
         assert_eq!(0, solution.calculate_constraint_violation());        
     }
     // TODO: Test Panic Cases
+
+    #[test]
+    fn test_view_solution() { 
+        let problem: Problem = Problem {
+            solution_length: 3,
+            number_of_objectives: 2,
+            objective_constraint: Some(vec![Some(10.0), Some(20.0)]),
+            objective_constraint_operands: Some(vec![Some(">".to_string()), Some("<".to_string())]),
+            direction: Some(vec![-1, -1]),
+            solution_data_types: vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
+            objective_function: dtlz1
+        };
+        
+        let mut solution: Solution<'_> = Solution::new(&problem);
+        solution.solution = vec![1.0, 2.0, 3.0, -4.0, -5.0];
+        println!("SOLUTION: {:?}", solution.solution);
+        println!("OBJECTIVE VALUES: {:?}", solution.problem.solution_data_types);
+    }
 
 }
