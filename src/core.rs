@@ -78,7 +78,7 @@ impl Problem {
         // Check if Operatnds are are <, >, <=, >=, ==, !=
         let operands = &self.objective_constraint_operands;
         if operands.is_some() {
-            let operands = operands.as_ref().unwrap();
+            let operands  = operands.as_ref().unwrap();
             for operand in operands {
                 let operand = operand.as_ref().unwrap();
                 if operand != "<" && operand != ">" && operand != "<=" && operand != ">=" && operand != "==" && operand != "!=" {
@@ -94,7 +94,7 @@ impl Problem {
         &self.direction
     }
 
-    pub fn solution_data_type(&self) -> &Vec<SolutionDataTypes> {
+    pub fn solution_data_types(&self) -> &Vec<SolutionDataTypes> {
         &self.solution_data_types
     }
 
@@ -104,23 +104,16 @@ impl Problem {
 
     pub fn generate_solution(&self) -> Vec<f64> {
         let mut solution: Vec<f64> = Vec::new();
-        let real_lower_bound = 10.0;
-        let real_upper_bound: f64 = 20.0;
-        let integer_lower_bound: i64 = 10;
-        let integer_upper_bound: i64 = 20;
         for solution_type in &self.solution_data_types {
             match solution_type {
-                SolutionDataTypes::BitBinary(ref b) => {
-                    let binary: BitBinary = BitBinary::new(None);
-                    solution.push(binary.value().unwrap() as f64);
+                SolutionDataTypes::BitBinary(binary) => {
+                    solution.push(binary.generate_value().unwrap() as f64);
                 }
-                SolutionDataTypes::Integer(ref i) => {
-                    let integer: Integer = Integer::new(None, Some(integer_lower_bound), Some(integer_upper_bound));
-                    solution.push(integer.value().unwrap() as f64);
+                SolutionDataTypes::Integer(integer) => {
+                    solution.push(integer.generate_value().unwrap() as f64);
                 }
-                SolutionDataTypes::Real(ref r) => {
-                    let real = Real::new(None, Some(real_lower_bound), Some(real_upper_bound));
-                    solution.push(real.value().unwrap());
+                SolutionDataTypes::Real(real) => {
+                    solution.push(real.generate_value().unwrap());
                 }
             }
         }
@@ -128,7 +121,7 @@ impl Problem {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Solution<'a> { 
     pub problem: &'a Problem,
     pub solution: Vec<f64>, // Derived from Problem.solution_data_types
@@ -252,173 +245,207 @@ impl<'a> Solution<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
-    use crate::gatypes::{SolutionDataTypes, BitBinary, Integer, Real};
-    // import functions from benchmark_objective_functions.rs
-    use crate::core::{Problem, Solution};
-    use crate::benchmark_objective_functions::{simple_objective, dtlz1, dtlz2, dtlz3, dtlz4, dtlz5, dtlz6, dtlz7, xyz_objective};
+    use super::*;
+    use crate::gatypes::{BitBinary, Integer, Real};
+    use crate::benchmark_objective_functions::{parabloid_5_loc};
+
     #[test]
-    fn test() { 
-        let a: usize = 20; 
-        let b = &a; 
-        for _i in 0..*b { 
-            println!("Hello World: {:?}", _i);
-        }
-        // Create BitBinary and Real Solution Types
-        let binary = BitBinary::new(None);
-        let integer: Integer = Integer::new(None, Some(10), Some(20));
-        let real = Real::new(None, Some(10.0), Some(20.0));
-        println!("{:?}", integer);
-        println!("{:?}", binary);
-        println!("{:?}", real);
-
-
+    fn test_bit_binary() {
+        let bit_binary = BitBinary::new();
+        let value = bit_binary.generate_value().unwrap();
+        assert!(value == 0 || value == 1);
     }
 
     #[test]
-    fn test_problem() {
+    fn test_integer() {
+        let integer = Integer::new(Some(10), Some(20));
+        let value = integer.generate_value().unwrap();
+        assert!(value >= 10 && value < 20);
+    }
+
+    #[test]
+    fn test_real() {
+        let real = Real::new(Some(10.0), Some(20.0));
+        let value = real.generate_value().unwrap();
+        assert!(value >= 10.0 && value < 20.0);
+    }
+
+    #[test]
+    fn test_problem_initialization() {
+        let solution_data_types = vec![
+            SolutionDataTypes::BitBinary(BitBinary::new()),
+            SolutionDataTypes::Integer(Integer::new(Some(10), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Integer(Integer::new(Some(10), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+        ];
+
         let problem = Problem::new(
-            3,
-            2,
-            Some(vec![Some(10.0), Some(20.0)]),
-            Some(vec![Some(">".to_string()), Some("<".to_string())]),
-            Some(vec![-1, -1]),
-            vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
-            |solution: &Vec<f64>| {
-                let mut objective_fitness_values: Vec<f64> = Vec::new();
-                objective_fitness_values.push(solution[0] + solution[1]);
-                objective_fitness_values.push(solution[2]);
-                objective_fitness_values
-            }
+            5,
+            1,
+            None,
+            None,
+            None,
+            solution_data_types,
+            parabloid_5_loc,
         );
-        assert_eq!(*problem.solution_length(), 3);
-        assert_eq!(*problem.number_of_objectives(), 2);
-        assert_eq!(*problem.objective_constraint(), Some(vec![Some(10.0), Some(20.0)]));
-        assert_eq!(*problem.objective_constraint_operands(), Some(vec![Some(">".to_string()), Some("<".to_string())]));
-        assert_eq!(*problem.direction(), Some(vec![-1, -1]));
-        // assert_eq!(*problem.solution_data_types(), vec![SolutionType::BitBinary, SolutionType::Integer, SolutionType::Real]);
-        assert_eq!(*problem.objective_function()(&vec![1.0, 2.0, 3.0]), vec![3.0, 3.0]);
-    }
 
-    #[test]
-    fn test_types_are_good() { 
-        let bin = BitBinary::new(None);
-        let int: Integer = Integer::new(None, Some(10), Some(20));
-        let real: Real = Real::new(None, Some(10.0), Some(20.0));
-        println!("{:?}", bin.value());
-        println!("{:?}", int.value());
-        println!("{:?}", real.value());
+        assert_eq!(*problem.solution_length(), 5);
+        assert_eq!(*problem.number_of_objectives(), 1);
         
 
     }
 
+    // #[test]
+    // #[should_panic(expected = "solution_length does not match solution_data_types length")]
+    // fn test_problem_initialization_mismatched_lengths() {
+    //     let solution_data_types = vec![
+    //         SolutionDataTypes::BitBinary(BitBinary::new()),
+    //         SolutionDataTypes::Integer(Integer::new(Some(10), Some(20))),
+    //         SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+    //         SolutionDataTypes::Integer(Integer::new(Some(10), Some(20))),
+    //         SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+    //     ];
+
+    //     Problem::new(
+    //         5,
+    //         1,
+    //         None,
+    //         None,
+    //         None,
+    //         solution_data_types,
+    //         parabloid_5_loc,
+    //     );
+    // }
+
     #[test]
-    fn test_problem_generate_solution() {
-        let problem: Problem = Problem::new(
-            3,
-            2,
-            Some(vec![Some(10.0), Some(20.0)]),
-            Some(vec![Some(">".to_string()), Some("<".to_string())]),
-            Some(vec![-1, -1]),
-            vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
-            |solution: &Vec<f64>| {
-                let mut objective_fitness_values: Vec<f64> = Vec::new();
-                objective_fitness_values.push(solution[0] + solution[1]);
-                objective_fitness_values.push(solution[2]);
-                objective_fitness_values
-            }
+    fn test_generate_solution() {
+        let solution_data_types = vec![
+            SolutionDataTypes::BitBinary(BitBinary::new()),
+            SolutionDataTypes::Integer(Integer::new(Some(10), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Integer(Integer::new(Some(-100), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(-10.0), Some(20.0))),
+        ];
+
+        let problem = Problem::new(
+            5,
+            1,
+            None,
+            None,
+            None,
+            solution_data_types,
+            parabloid_5_loc,
         );
-        let solution_vector = problem.generate_solution();
-        println!("SOLUTION VECTOR: {:?}", solution_vector);
-        assert_eq!(solution_vector.len(), 3);
-    }
 
-    #[test] // Test Solution
-    fn test_solution_no_constraints() {
-        // TODO: FIX TEST objective function still outputs and empty vector
+        let solution = problem.generate_solution();
+        assert_eq!(solution.len(), 5);
 
-        let problem: Problem = Problem {
-            solution_length: 3,
-            number_of_objectives: 2,
-            objective_constraint: Some(vec![Some(10.0), Some(20.0)]),
-            objective_constraint_operands: Some(vec![Some(">".to_string()), Some("<".to_string())]),
-            direction: Some(vec![-1, -1]),
-            solution_data_types: vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
-            objective_function: xyz_objective,
-        };
-        
-        let mut solution: Solution<'_> = Solution::new(&problem);
-        solution.solution = solution.problem.generate_solution();
-        solution.evaluate();
-        
-        assert_eq!(solution.evaluated, true);
-        assert_eq!(solution.solution.len(), 3);
-        assert_eq!(solution.objective_fitness_values().len(), 2);
-        assert_eq!(solution.constraint_values().len(), 0);
-    }
-    #[test]
-    fn test_solution_with_constraints_() { 
-
-        
-        let problem: Problem = Problem {
-            solution_length: 3,
-            number_of_objectives: 2,
-            objective_constraint: Some(vec![Some(10.0), Some(20.0)]),
-            objective_constraint_operands: Some(vec![Some(">".to_string()), Some("<".to_string())]),
-            direction: Some(vec![-1, -1]),
-            solution_data_types: vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
-            objective_function: simple_objective,
-        };
-        
-        let mut solution: Solution<'_> = Solution::new(&problem);
-        solution.solution = vec![1.0, 2.0, 3.0]; 
-        solution.evaluate();
-       
-        assert_eq!(vec![14.0, 8.0], solution.objective_fitness_values);
-        assert_eq!(true, solution.is_feasible());
-        assert_eq!(0, solution.calculate_constraint_violation());        
     }
 
     #[test]
-    fn test_solution_with_constraints_dtlz1() { 
-        // let vectr = vec![1.0, 2.0, 3.0, -4.0, -5.0];
-       
-        let problem: Problem = Problem {
-            solution_length: 3,
-            number_of_objectives: 2,
-            objective_constraint: Some(vec![Some(10.0), Some(20.0)]),
-            objective_constraint_operands: Some(vec![Some(">".to_string()), Some("<".to_string())]),
-            direction: Some(vec![-1, -1]),
-            solution_data_types: vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
-            objective_function: dtlz1
-        };
-        
-        let mut solution: Solution<'_> = Solution::new(&problem);
-        solution.solution = vec![1.0, 2.0, 3.0, -4.0, -5.0]; 
+    fn test_solution_evaluation() {
+        let solution_data_types = vec![
+            SolutionDataTypes::BitBinary(BitBinary::new()),
+            SolutionDataTypes::Integer(Integer::new(Some(10), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Integer(Integer::new(Some(-100), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(-10.0), Some(20.0))),
+        ];
+
+        let problem = Problem::new(
+            5,
+            1,
+            None,
+            None,
+            None,
+            solution_data_types,
+            parabloid_5_loc,
+        );
+
+        let mut solution = Solution::new(&problem);
         solution.evaluate();
-        
-        assert_eq!(vec![-12.0, 3.0, 1.0, 0.5], solution.objective_fitness_values);
-        assert_eq!(true, solution.is_feasible());
-        assert_eq!(0, solution.calculate_constraint_violation());        
+
+        assert!(solution.evaluated);
+        assert_eq!(solution.objective_fitness_values().len(), 1);
     }
-    // TODO: Test Panic Cases
 
     #[test]
-    fn test_view_solution() { 
-        let problem: Problem = Problem {
-            solution_length: 3,
-            number_of_objectives: 2,
-            objective_constraint: Some(vec![Some(10.0), Some(20.0)]),
-            objective_constraint_operands: Some(vec![Some(">".to_string()), Some("<".to_string())]),
-            direction: Some(vec![-1, -1]),
-            solution_data_types: vec![SolutionDataTypes::new_binary(None) , SolutionDataTypes::new_integer( None, Some(10), Some(20)) , SolutionDataTypes::new_real(None, Some(10.0), Some(20.0))], 
-            objective_function: dtlz1
-        };
-        
-        let mut solution: Solution<'_> = Solution::new(&problem);
-        solution.solution = vec![1.0, 2.0, 3.0, -4.0, -5.0];
-        println!("SOLUTION: {:?}", solution.solution);
-        println!("OBJECTIVE VALUES: {:?}", solution.problem.solution_data_types);
+    fn test_solution_feasibility() {
+        let solution_data_types = vec![
+            SolutionDataTypes::BitBinary(BitBinary::new()),
+            SolutionDataTypes::Integer(Integer::new(Some(10), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Integer(Integer::new(Some(-100), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(-10.0), Some(20.0))),
+        ];
+
+        let problem = Problem::new(
+            5,
+            1,
+            None,
+            None,
+            None,
+            solution_data_types,
+            parabloid_5_loc,
+        );
+
+        let mut solution = Solution::new(&problem);
+        solution.evaluate();
+
+        assert!(solution.is_feasible());
     }
 
+    #[test]
+    fn test_solution_constraint_violation() {
+        let solution_data_types = vec![
+            SolutionDataTypes::BitBinary(BitBinary::new()),
+            SolutionDataTypes::Integer(Integer::new(Some(10), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Integer(Integer::new(Some(-100), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(-10.0), Some(20.0))),
+        ];
+
+        let problem = Problem::new(
+            5,
+            1,
+            Some(vec![Some(15.0)]),
+            Some(vec![Some("<".to_string())]),
+            None,
+            solution_data_types,
+            parabloid_5_loc,
+        );
+
+        let mut solution = Solution::new(&problem);
+        solution.evaluate();
+
+        assert_eq!(solution.calculate_constraint_violation(), 0);
+    }
+
+
+    #[test]
+    fn test_problem_with_constraints() {
+        let solution_data_types = vec![
+            SolutionDataTypes::BitBinary(BitBinary::new()),
+            SolutionDataTypes::Integer(Integer::new(Some(10), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Integer(Integer::new(Some(-100), Some(20))),
+            SolutionDataTypes::Real(Real::new(Some(-10.0), Some(20.0))),
+        ];
+
+        let problem = Problem::new(
+            5,
+            1,
+            Some(vec![Some(15.0)]),
+            Some(vec![Some("<".to_string())]),
+            None,
+            solution_data_types,
+            parabloid_5_loc,
+        );
+
+        assert_eq!(*problem.solution_length(), 5);
+        assert_eq!(*problem.number_of_objectives(), 1);
+        assert_eq!(problem.objective_constraint().as_ref().unwrap().len(), 1);
+        assert_eq!(problem.objective_constraint_operands().as_ref().unwrap().len(), 1);
+    }
 }

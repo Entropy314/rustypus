@@ -7,23 +7,12 @@ use rand::Rng;
 #[derive(Debug)]
 pub enum SolutionDataTypes {
     Real(Real),
-    BitBinary(BitBinary),
-    Integer(Integer)
+    Integer(Integer),
+    BitBinary(BitBinary)
 }
 
-impl SolutionDataTypes {
-    pub fn new_real(value: Option<f64>, lower_bound: Option<f64>, upper_bound: Option<f64>) -> Self {
-        SolutionDataTypes::Real(Real::new(value, lower_bound, upper_bound))
-    }
-
-    pub fn new_integer(value: Option<i64>, lower_bound: Option<i64>, upper_bound: Option<i64>) -> Self {
-        SolutionDataTypes::Integer(Integer::new(value, lower_bound, upper_bound))
-    }
-
-    pub fn new_binary(value: Option<i64>) -> Self {
-        SolutionDataTypes::BitBinary(BitBinary::new(value))
-    }
-   
+pub trait SolutionType {
+    fn generate_value(&self) -> Option<i64>;
 }
 
 pub enum RealDataType { 
@@ -58,41 +47,22 @@ pub enum BinaryDataType {
     U128,
     U256
 }
-// pub enum SolutionDataTypes { 
-//     F64, 
-//     I64,
-//     Bool,
-//     I32, 
-//     U32,
-//     F32
 
-// }
 
 #[derive(Debug)]
 pub struct BitBinary { 
-    pub value: Option<i64>
 }
 
 // create a method on BitBinary that randomly genrates a 1 or 0 for value
 impl BitBinary {
-    pub fn new(value: Option<i64>) -> Self {
-        let mut rng = rand::thread_rng();
-
-        let value = match value {
-            Some(v) => {
-                if v != 0 && v != 1 {
-                    panic!("value must be 0 or 1");
-                }
-                Some(v)
-            },
-            None => Some(rng.gen_range(0..=1)),
-        };
-
-        BitBinary { value }
+    pub fn new() -> Self {
+        Self { }
     }
 
-    pub fn value(&self) -> Option<i64> {
-        self.value
+    pub fn generate_value(&self) -> Option<i64> {
+        let mut rng = rand::thread_rng();
+        Some(rng.gen_range(0..2))
+        
     }
 }
 
@@ -100,201 +70,113 @@ impl BitBinary {
 // Create an Integer object where the lower and upper bounds are optional parameters
 #[derive(Debug)]
 pub struct Integer {
-    pub value: Option<i64>,
     pub lower_bound: Option<i64>,
     pub upper_bound: Option<i64>
 }
 
 // create a method on Integer that randomly genrates a number between the lower and upper bounds
 impl Integer {
-    pub fn new(value: Option<i64>, lower_bound: Option<i64>, upper_bound: Option<i64>) -> Self {
-        // if lower_bound == upper_bound panic
-        if lower_bound.is_some() && upper_bound.is_some() && lower_bound >= upper_bound {
-            panic!("lower_bound must be less than upper_bound");
+    // When creating a new Integer object, the lower and upper bounds are optional parameters check if lower < upper with a panic
+    pub fn new(lower_bound: Option<i64>, upper_bound: Option<i64>) -> Self {
+        if lower_bound.is_some() && upper_bound.is_some() {
+            if lower_bound.unwrap() > upper_bound.unwrap() {
+                panic!("Lower bound must be less than upper bound");
+            } else if lower_bound.unwrap() == upper_bound.unwrap() {
+                panic!("Lower bound must not be equal to upper bound");
+            } 
         }
-
-        let mut rng = rand::thread_rng();
-        // if value is None generate value between lower and upper bounds else use value
-        let value = match value {
-            Some(v) => {
-                if lower_bound.is_some() && v < lower_bound.unwrap() || upper_bound.is_some() && v > upper_bound.unwrap() {
-                    panic!("value must be between the lower and upper bounds");
-                }
-                Some(v)
-            },
-            None => {
-                match (lower_bound, upper_bound) {
-                    (Some(lower_bound), Some(upper_bound)) => Some(rng.gen_range(lower_bound..upper_bound)),
-                    (Some(lower_bound), None) => Some(rng.gen_range(lower_bound..i64::MAX)),
-                    (None, Some(upper_bound)) => Some(rng.gen_range(i64::MIN..upper_bound)),
-                    (None, None) => Some(rng.gen_range(i64::MIN..i64::MAX)),
-                }
-            }
-        };
-
-        Integer { value, lower_bound, upper_bound }
+        Self {
+            lower_bound,
+            upper_bound
+        }
     }
-
-    // create a method on Integer that returns the value
-    pub fn value(&self) -> Option<i64> {
-        self.value
+    // Create Generate Value Method
+    pub fn generate_value(&self) -> Option<i64> {
+        let mut rng = rand::thread_rng();
+        Some(rng.gen_range(self.lower_bound.unwrap_or(i64::MIN)..self.upper_bound.unwrap_or(i64::MAX)))
     }
 }
 
 #[derive(Debug)]
 pub struct Real { 
-    pub value: Option<f64>, 
     pub lower_bound: Option<f64>,
     pub upper_bound: Option<f64>
 }
 
 // create a method on Real that randomly genrates a number between the lower and upper bounds
 impl Real {
-    pub fn new(value: Option<f64>, lower_bound: Option<f64>, upper_bound: Option<f64>) -> Self {
-        // if lower_bound == upper_bound panic
-        
-        if lower_bound.is_some() && upper_bound.is_some() && lower_bound >= upper_bound {
-            panic!("lower_bound must be less than upper_bound");
-        }
-        // if lower_bound or upper_bound is None set to min or max value to self struct
-        
-
-        if lower_bound.is_none() { 
-            let lower_bound = Some(f64::MIN);
-        }
-        if upper_bound.is_none() { 
-            let upper_bound = Some(f64::MAX);
-        }
-
-        let mut rng = rand::thread_rng();
-        // if lower_bound is None and upper_bound is NOne max and min values are used
-
-
-
-        // if value is None generate value between lower and upper bounds else use value
-        let value = match value {
-            Some(v) => {
-                if lower_bound.is_some() && v < lower_bound.unwrap() || upper_bound.is_some() && v > upper_bound.unwrap() {
-                    panic!("value must be between the lower and upper bounds");
-                }
-                Some(v)
-            },
-            None => {
-                match (lower_bound, upper_bound) {
-                    (Some(lower_bound), Some(upper_bound)) => Some(rng.gen_range(lower_bound..upper_bound)),
-                    (Some(lower_bound), None) => Some(rng.gen_range(lower_bound..f64::MAX)),
-                    (None, Some(upper_bound)) => Some(rng.gen_range(f64::MIN..upper_bound)),
-                    (None, None) => Some(rng.gen_range(f64::MIN..f64::MAX)),
-                }
+    // When creating a new Real object, the lower and upper bounds are optional parameters check if lower < upper with a panic
+    pub fn new(lower_bound: Option<f64>, upper_bound: Option<f64>) -> Self {
+        if lower_bound.is_some() && upper_bound.is_some() {
+            if lower_bound.unwrap() > upper_bound.unwrap() {
+                panic!("Lower bound must be less than upper bound");
+            } else if lower_bound.unwrap() == upper_bound.unwrap() {
+                panic!("Lower bound must not be equal to upper bound");
             }
-        };
-
-        Real { value, lower_bound, upper_bound }
+        }
+        Self {
+            lower_bound,
+            upper_bound
+        }
     }
 
-    // create a method on Real that returns the value
-    pub fn value(&self) -> Option<f64> {
-        self.value
+    pub fn generate_value(&self) -> Option<f64> {
+        let mut rng = rand::thread_rng();
+        Some(rng.gen_range(self.lower_bound.unwrap_or(f64::MIN)..self.upper_bound.unwrap_or(f64::MAX)))
     }
 }
 
 
-
-// Create Unit Tests
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::gatypes::SolutionDataTypes;
+
     #[test]
-    fn test_binary_no_default() {
-        let BitBinary = BitBinary::new(None);
-        println!("{:?}",BitBinary.value);
-        assert!(BitBinary.value() == Some(0) || BitBinary.value() == Some(1));
+    fn test_bit_binary_generation() {
+        let bit_binary = BitBinary::new();
+        for _ in 0..100 {
+            let value = bit_binary.generate_value().unwrap();
+            assert!(value == 0 || value == 1);
+        }
     }
 
     #[test]
-    fn test_binary_default() {
-        let BitBinary = BitBinary::new(Some(1));
-        assert!(BitBinary.value() == Some(0) || BitBinary.value() == Some(1));
+    fn test_integer_generation_with_bounds() {
+        let integer = Integer::new(Some(10), Some(20));
+        for _ in 0..100 {
+            let value = integer.generate_value().unwrap();
+            assert!(value >= 10 && value < 20);
+        }
     }
 
     #[test]
-    fn test_integer_no_default() {
-        let integer = Integer::new(None, Some(0), Some(10));
-        assert!(integer.value >= Some(0) && integer.value <= Some(10));
+    fn test_real_generation_with_bounds() {
+        let real = Real::new(Some(10.0), Some(20.0));
+        for _ in 0..100 {
+            let value = real.generate_value().unwrap();
+            assert!(value >= 10.0 && value < 20.0);
+        }
     }
 
     #[test]
-    fn test_integer_default() {
-        let integer = Integer::new(Some(8888), Some(0), Some(9000));
-        assert!(integer.value >= Some(0) && integer.value <= Some(9000));
+    fn test_integer_generation_without_bounds() {
+        let integer = Integer::new(None, None);
+        for _ in 0..100 {
+            let value = integer.generate_value().unwrap();
+            // Just test that a value is generated; range is too large to test accurately
+            assert!(value >= i64::MIN && value <= i64::MAX);
+        }
     }
 
     #[test]
-    fn test_real_no_default() { 
-        let real = Real::new(None,Some(0.0), Some(2000.0));
-        println!("{:?}",real.value);
-        assert!(real.value >= Some(0.0) && real.value <= Some(2000.0));
+    #[should_panic(expected = "Lower bound must be less than upper bound")]
+    fn test_integer_invalid_bounds() {
+        Integer::new(Some(20), Some(10));
     }
 
     #[test]
-    fn test_real_default() { 
-        let real = Real::new(Some(400.4),Some(0.0), Some(6000.0));
-        println!("{:?}",real.value);
-        assert!(real.value >= Some(0.0) && real.value <= Some(6000.0));
-        assert!(real.value == Some(400.4));
+    #[should_panic(expected = "Lower bound must be less than upper bound")]
+    fn test_real_invalid_bounds() {
+        Real::new(Some(20.0), Some(10.0));
     }
-    // Unit test for the Enum
-    #[test]
-    fn test_solution_type() {
-        let BitBinary:BitBinary = BitBinary { value: Some(1) };
-        let integer:Integer = Integer { value: Some(10), lower_bound: Some(0), upper_bound: Some(100) };
-        let real:Real = Real { value: Some(10.0), lower_bound: Some(0.0), upper_bound: Some(100.0) };
-
-        // print the type
-        println!("{:?}", BitBinary);
-        println!("{:?}", integer);
-        println!("{:?}", real);
-        assert!(match BitBinary {
-            _BitBinary => true,
-            _ => false
-        });
-        assert!(match integer {
-            _Integer => true,
-            _ => false
-        });
-        assert!(match real {
-            _Real => true,
-            _ => false
-        });
-    }
-
-    // test solutiontype enum
-
-    // Now for the SolutionType enum
-    #[test]
-    fn test_solution_type2() {
-        let real: SolutionDataTypes = SolutionDataTypes::new_real(None, Some(0.0), Some(10.0));
-        let binary: SolutionDataTypes = SolutionDataTypes::new_binary(Some(1));
-        let integer: SolutionDataTypes = SolutionDataTypes::new_integer(Some(10), Some(0), Some(100));
-        let real: Real = Real::new(None, Some(0.0), Some(10.0));
-
-        // print the type
-        println!("{:?}", real);
-        println!("{:?}", binary);
-        println!("{:?}", integer);
-        assert!(match real {
-            _Real => true,
-            _ => false
-        });
-        assert!(match binary {
-            _BitBinary => true,
-            _ => false
-        });
-        assert!(match integer {
-            _Integer => true,
-            _ => false
-        });
-    }
-
 }

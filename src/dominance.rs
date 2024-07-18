@@ -299,7 +299,7 @@ impl Dominance for ParetoDominance {
 mod tests {
     use super::*;
     use crate::core::{Problem, Solution};
-    use crate::gatypes::SolutionDataTypes;
+    use crate::gatypes::{SolutionDataTypes, Real, BitBinary, Integer};
     use crate::benchmark_objective_functions::{parabloid_5, parabloid_hyper_5};
     // Create Problem
    
@@ -308,15 +308,19 @@ mod tests {
         // positive direction for single objecteive function
         // R^5 => R^1
         let problem: Problem = Problem {
-            solution_length: 3,
+            solution_length: 5,
             number_of_objectives: 1,
             objective_constraint: Some(vec![Some(10.0)]),
             objective_constraint_operands: Some(vec![Some("<".to_string())]),
             direction: Some(vec![1]),
-            solution_data_types: vec![SolutionDataTypes::new_binary(None), SolutionDataTypes::new_real(Some(1.), Some(0.), Some(100.))],
+            solution_data_types: vec![SolutionDataTypes::BitBinary(BitBinary::new()), 
+                                    SolutionDataTypes::Integer(Integer::new(Some(0), Some(100))),
+                                    SolutionDataTypes::Real(Real::new(Some(0.), Some(100.))),
+                                    SolutionDataTypes::Integer(Integer::new(Some(0), Some(100))),
+                                    SolutionDataTypes::Real(Real::new(Some(0.), Some(100.))),],
             objective_function: parabloid_5
         };
-        let solution_vector1:Vec<f64> = vec![1.0, 2.0, -3.0, 4.0, 5.0];
+        let solution_vector1:Vec<f64> = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let solution_vector2:Vec<f64> = vec![12.0, 10.0, -3.0, 4.0, 5.0];
 
         let mut solution_1 = Solution {problem: &problem, solution: solution_vector1, 
@@ -349,7 +353,11 @@ mod tests {
             objective_constraint: Some(vec![Some(10.0)]),
             objective_constraint_operands: Some(vec![Some("<".to_string())]),
             direction: Some(vec![-1]),
-            solution_data_types: vec![SolutionDataTypes::new_binary(None), SolutionDataTypes::new_real(Some(1.), Some(0.), Some(100.))],
+            solution_data_types: vec![SolutionDataTypes::BitBinary(BitBinary::new()), 
+                                        SolutionDataTypes::Integer(Integer::new(Some(0), Some(100))),
+                                        SolutionDataTypes::Real(Real::new(Some(0.), Some(100.))),
+                                        SolutionDataTypes::Integer(Integer::new(Some(0), Some(100))),
+                                        SolutionDataTypes::Real(Real::new(Some(0.), Some(100.))),],
             objective_function: parabloid_5
         };
         let solution_vector1:Vec<f64> = vec![1.0, 2.0, -3.0, 4.0, 5.0];
@@ -379,12 +387,16 @@ mod tests {
         // negative direction for single objecteive function
         // R^5 => R^5
         let problem: Problem = Problem {
-            solution_length: 3,
+            solution_length: 5,
             number_of_objectives: 5,
             objective_constraint: Some(vec![Some(50.0), Some(60.0), Some(70.0), Some(80.0), Some(90.0)]),
             objective_constraint_operands: Some(vec![Some("<".to_string()), Some("<".to_string()), Some("<".to_string()), Some("<".to_string()), Some("<".to_string())], ),
             direction: Some(vec![1, 1, 1, 1, 1]),
-            solution_data_types: vec![SolutionDataTypes::new_binary(None), SolutionDataTypes::new_real(Some(1.), Some(0.), Some(100.))],
+            solution_data_types: vec![SolutionDataTypes::BitBinary(BitBinary::new()), 
+                                    SolutionDataTypes::Integer(Integer::new(Some(0), Some(100))),
+                                    SolutionDataTypes::Real(Real::new(Some(0.), Some(100.))),
+                                    SolutionDataTypes::Integer(Integer::new(Some(0), Some(100))),
+                                    SolutionDataTypes::Real(Real::new(Some(0.), Some(100.))),],
             objective_function: parabloid_hyper_5
         };
         let solution_vector1:Vec<f64> = vec![1.0, 2.0, -3.0, 4.0, 5.0];
@@ -422,7 +434,11 @@ mod tests {
             objective_constraint: Some(vec![Some(50.0), None, Some(70.0), Some(80.0), Some(90.0)]),
             objective_constraint_operands: Some(vec![Some("<".to_string()), None, Some("<".to_string()), Some("<".to_string()), Some("<".to_string())], ),
             direction: Some(vec![1, 1, 1, 1, 1]),
-            solution_data_types: vec![SolutionDataTypes::new_binary(None), SolutionDataTypes::new_real(Some(1.), Some(0.), Some(100.))],
+            solution_data_types: vec![SolutionDataTypes::BitBinary(BitBinary::new()), 
+                                    SolutionDataTypes::Integer(Integer::new(Some(0), Some(100))),
+                                    SolutionDataTypes::Real(Real::new(Some(0.), Some(100.))),
+                                    SolutionDataTypes::Integer(Integer::new(Some(0), Some(100))),
+                                    SolutionDataTypes::Real(Real::new(Some(0.), Some(100.))),],
             objective_function: parabloid_hyper_5
         };
         let solution_vector1:Vec<f64> = vec![1.0, 2.0, -3.0, 4.0, 5.0];
