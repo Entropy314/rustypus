@@ -13,6 +13,7 @@ pub enum SolutionDataTypes {
 
 pub trait SolutionType {
     fn generate_value(&self) -> Option<i64>;
+    
 }
 
 pub enum RealDataType { 

@@ -1,8 +1,11 @@
-use std::fmt::Binary;
-
-use crate::core::{Problem, Solution};
-use crate::gatypes::{SolutionDataTypes, Real};
+use crate::core::Solution;
+use crate::gatypes::{SolutionDataTypes, SolutionType};
 use rand::Rng;
+use rand_distr::StandardNormal;
+use crate::gatypes::Real;
+// use crate::genetic_operators::SolutionDataTypes::Real;
+
+use crate::math_utils::{subtract, add, multiply, magnitude, normalize, orthogonalize, is_zero, clip};
 
 pub trait Mutation<'a> {
     fn mutate(&self, parent: &'a Solution<'a>) -> Solution<'a>;
@@ -121,8 +124,8 @@ impl SimulatedBinaryCrossOver {
         let mut x2 = x2;
 
         if (x2 - x1).abs() > f64::EPSILON {
-            let mut y1 = x1.min(x2);
-            let mut y2 = x1.max(x2);
+            let y1 = x1.min(x2);
+            let y2 = x1.max(x2);
 
             let beta = 1.0 + (2.0 * (y1 - lb) / (y2 - y1));
             let alpha = 2.0 - beta.powf(-(self.distribution_index.unwrap_or(20.) + 1.0));
@@ -196,15 +199,81 @@ impl<'a> Variation<'a> for SimulatedBinaryCrossOver {
     }
 }
 
-// PCX
-// pub struct ParentCentricCrossOver {
-//     pub nparents: usize,
-//     pub noffspring: usize,
-//     pub eta: f64,
-//     pub zeta: f64,
-// }
-// Example usage and unit tests
+// PCX (Parent Centric Crossover) implementation
+pub struct ParentCentricCrossover {
+    pub n_parents: Option<usize>,
+    pub n_offspring: Option<usize>,
+    pub eta: Option<f64>,
+    pub zeta: Option<f64>
+}
+impl ParentCentricCrossover {
+    pub fn new(n_parents: Option<usize>, n_offspring: Option<usize>, eta: Option<f64>, zeta: Option<f64>) -> Self {
+        let n_parents: usize = n_parents.unwrap_or(10);
+        let n_offspring: usize = n_offspring.unwrap_or(10);
+        let eta: f64 = eta.unwrap_or(0.1);
+        let zeta: f64 = zeta.unwrap_or(0.1);
+        Self {
+            n_parents: Some(n_parents),
+            n_offspring: Some(n_offspring),
+            eta: Some(eta),
+            zeta: Some(zeta),
+        }
+    }
 
+    fn parent_centric_crossover<'a>(&self, parents: &[Solution<'a>]) -> Solution<'a> {
+        let k = parents.len();
+        let n = parents[0].problem.solution_length;
+        let mut rng = rand::thread_rng();
+
+        let mut x = vec![vec![0.0; n]; k];
+        for i in 0..k {
+            x[i] = parents[i].solution.clone();
+        }
+
+        let g: Vec<f64> = (0..n)
+            .map(|j| x.iter().map(|xi| xi[j]).sum::<f64>() / k as f64)
+            .collect();
+
+        let mut e_eta = vec![vec![0.0; n]];
+        e_eta[0] = subtract(&x[k - 1], &g);
+
+        let mut dd:f64  = 0.0;
+        for i in 0..(k - 1) {
+            let d = subtract(&x[i], &g);
+            if !is_zero(&d) {
+                let e = orthogonalize(&d, &e_eta);
+                if !is_zero(&e) {
+                    dd += magnitude(&e);
+                    e_eta.push(normalize(&e));
+                }
+            }
+        }
+        dd /= (k - 1) as f64;
+
+        let mut variables = x[k - 1].clone();
+        variables = add(&variables, &multiply(rng.sample::<f64, StandardNormal>(StandardNormal) * self.zeta.unwrap(), &e_eta[0]));
+
+        let eta = rng.sample::<f64, StandardNormal>(rand_distr::StandardNormal) * self.eta.unwrap();
+        for i in 1..e_eta.len() {
+            variables = add(&variables, &multiply(eta * dd, &e_eta[i]));
+        }
+
+        let mut result: Solution<'a> = parents[k - 1].clone();
+        for j in 0..n {
+            match &result.problem.solution_data_types[j] {
+                SolutionDataTypes::Real(Real { lower_bound, upper_bound }) => {
+                    result.solution[j] = clip(variables[j], lower_bound.unwrap_or(f64::MIN), upper_bound.unwrap_or(f64::MAX));
+                }
+                _ => {}
+            }
+        }
+        result.evaluated = false;
+        result.feasible = false;
+
+        result
+    }
+    
+}
 pub struct BitFlipMutation {
     pub probability: Option<f64>,
 }
@@ -226,7 +295,7 @@ impl<'a> Mutation<'a> for BitFlipMutation {
 
         for (i, solution_type) in problem.solution_data_types.iter().enumerate() {
             match solution_type {
-                SolutionDataTypes::BitBinary(bit_binary) => {
+                SolutionDataTypes::BitBinary(_bit_binary) => {
                     if rng.gen::<f64>() < probability {
                         child.solution[i] = 1. - child.solution[i];
                     }
@@ -377,5 +446,73 @@ mod tests {
         assert_ne!(solution1.solution, child1.solution);
         assert_ne!(solution2.solution, child2.solution);
     }
+
+    // Bitflip tests
+    #[test]
+    fn test_bitflip_mutation() {
+        let solution_data_types = vec![ SolutionDataTypes::BitBinary(BitBinary::new()), SolutionDataTypes::BitBinary(BitBinary::new()), 
+                                                                SolutionDataTypes::BitBinary(BitBinary::new()), SolutionDataTypes::BitBinary(BitBinary::new()), 
+                                                                SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0)))];
+
+        let problem = Problem::new(
+            5,
+            1,
+            None,
+            None,
+            None,
+            solution_data_types,
+            parabloid_5_loc,
+        );
+
+        let solution = Solution::new(&problem);
+        println!("Original solution: {:?}", solution.solution);
+        let mutation = BitFlipMutation::new(Some(0.5));
+        let mutated_solution = mutation.mutate(&solution);
+        println!("Mutated solution: {:?}", mutated_solution.solution);
+        // print size of solution
+        // assert_ne!(solution.solution, mutated_solution.solution);
+
+    }
+
+    #[test] // Parent Centric Crossover
+    fn test_parent_centric_crossover() {
+        let solution_data_types = vec![
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+            SolutionDataTypes::Real(Real::new(Some(10.0), Some(20.0))),
+        ];
+
+        let problem = Problem::new(
+            5,
+            1,
+            None,
+            None,
+            None,
+            solution_data_types,
+            parabloid_5_loc,
+        );
+
+        let solution1 = Solution::new(&problem);
+        let solution2 = Solution::new(&problem);
+        let solution3 = Solution::new(&problem);
+        let solution4 = Solution::new(&problem);
+        let solution5 = Solution::new(&problem);
+        let parents = vec![solution1, solution2, solution3, solution4, solution5];
+
+        println!("Parents: {:?}", parents.iter().map(|p| p.solution.clone()).collect::<Vec<Vec<f64>>>());
+
+        let pcx = ParentCentricCrossover::new(Some(5), Some(10), Some(0.1), Some(0.1));
+        let child = pcx.parent_centric_crossover(&parents);
+        println!("Child: {:?}", child.solution);
+
+        assert!(child.solution.iter().all(|&x| x >= 10.0 && x <= 20.0));
+        // more tests
+        // assert_ne!(&solution1.solution, &child.solution);
+
+
+    }
+    //
 
 }

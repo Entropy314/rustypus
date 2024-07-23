@@ -38,6 +38,20 @@ pub fn gram_schmidt(basis: &[Vec<f64>]) -> Vec<Vec<f64>> {
     ortho_basis
 }
 
+pub fn is_zero(vector: &[f64]) -> bool {
+    vector.iter().all(|&x| x == 0.0)
+}
+
+pub fn clip(value: f64, lower: f64, upper: f64) -> f64 {
+    if value < lower {
+        lower
+    } else if value > upper {
+        upper
+    } else {
+        value
+    }
+}
+
 // UnitTests
 #[cfg(test)]
 mod tests {
@@ -99,5 +113,21 @@ mod tests {
             vec![0.0, 1.0, 0.0],
             vec![0.0, 0.0, 1.0]
         ]);
+    }
+
+    // Test is_zero
+    #[test]
+    fn test_is_zero() {
+        let vec = vec![0.0, 0.0, 0.0];
+        assert_eq!(is_zero(&vec), true);
+    }
+
+    // Test clip
+    #[test]
+    fn test_clip() {
+        let value = 5.0;
+        let lower = 0.0;
+        let upper = 10.0;
+        assert_eq!(clip(value, lower, upper), 5.0);
     }
 }

@@ -247,7 +247,7 @@ impl<'a> Solution<'a> {
 mod tests {
     use super::*;
     use crate::gatypes::{BitBinary, Integer, Real};
-    use crate::benchmark_objective_functions::{parabloid_5_loc};
+    use crate::benchmark_objective_functions::parabloid_5_loc;
 
     #[test]
     fn test_bit_binary() {
@@ -289,6 +289,7 @@ mod tests {
             solution_data_types,
             parabloid_5_loc,
         );
+        
 
         assert_eq!(*problem.solution_length(), 5);
         assert_eq!(*problem.number_of_objectives(), 1);
@@ -338,7 +339,8 @@ mod tests {
             parabloid_5_loc,
         );
 
-        let solution = problem.generate_solution();
+        let solution: Vec<f64> = problem.generate_solution();
+        println!("{:?}", solution);
         assert_eq!(solution.len(), 5);
 
     }
