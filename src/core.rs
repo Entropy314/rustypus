@@ -3,7 +3,7 @@
 use crate::constraints::ComparisonFunctions;
 
 use crate::gatypes::SolutionDataTypes;
-use crate::gatypes::{BitBinary, Integer, Real};
+
 #[derive(Debug)]
 pub struct Problem {
     pub solution_length: usize,
@@ -139,7 +139,7 @@ impl<'a> Solution<'a> {
         // create vectore of length number_of_objectives
         let objective_fitness_values: Vec<f64> = Vec::with_capacity(*problem.number_of_objectives());
         let constraint_values: Vec<f64> = Vec::with_capacity(*problem.number_of_objectives());
-        let evaluated = false;
+        let evaluated: bool = false;
         let constraint_violation = 0;
         let feasible = false;
 

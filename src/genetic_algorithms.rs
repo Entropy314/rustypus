@@ -1,9 +1,9 @@
 use crate::core::{Problem, Solution};
-use crate::genetic_operators::Variation; 
+use crate::genetic_operators::{Variation, GeneticVariator}; 
 use crate::selectors::{Selector, TournamentSelector};
 use crate::benchmark_objective_functions::parabloid_5_loc;
 use crate::gatypes::{SolutionDataTypes, Real, Integer, BitBinary};
-
+use crate::dominance::DominanceEnum;
 
 
 pub trait AbstractGeneticAlgorithm {
@@ -17,20 +17,27 @@ pub struct BaseGeneticAlgorithm<'a> {
     pub problem: &'a Problem,
     pub population_size: usize,
     pub population: Vec<Solution<'a>>,
-    pub offspring_population: Vec<Solution<'a>>,
+    pub offspring_size: usize,
+    pub offspring: Vec<Solution<'a>>,
     pub nfe: usize,
-    pub selector: TournamentSelector
+    pub selector: TournamentSelector, 
+    pub dominance: DominanceEnum,
+    pub variator: GeneticVariator,
 }
 
 impl<'a> BaseGeneticAlgorithm<'a> {
-    pub fn new(problem: &'a Problem, population_size: usize) -> Self {
+    pub fn new(problem: &'a Problem, population_size: Option<usize>, offspring_size:Option<usize>) -> Self {
+        let population_size: usize = population_size.unwrap_or(10);
+        let offspring_size: usize = offspring_size.unwrap_or(10);
         Self {
             problem,
-            population_size,    
-            population: Vec::new(),
-            offspring_population: Vec::new(),
+            population_size,     
+            population: Vec::with_capacity(population_size),
+            offspring_size: offspring_size,
             nfe: 0,
+            dominance: DominanceEnum::ParetoDominance, 
             selector: TournamentSelector::default(),
+            variator: GeneticVariator,
         }
     }
 }
@@ -53,6 +60,7 @@ impl<'a> AbstractGeneticAlgorithm for BaseGeneticAlgorithm<'a> {
     }
 
     fn iterate(&mut self) {
+
 
     }
 
