@@ -62,7 +62,7 @@ impl TournamentSelector {
 
 impl Default for TournamentSelector {
     fn default() -> Self {
-        TournamentSelector::new(2, ParetoDominance, Some(12444))
+        TournamentSelector::new(2, ParetoDominance, Some(1234))
     }
 }
 

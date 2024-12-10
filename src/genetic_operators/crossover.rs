@@ -414,7 +414,7 @@ impl<'a> CrossoverManager<'a> {
         &self,
         parent1: &'a Solution<'a>,
         parent2: &'a Solution<'a>,
-    ) -> (Solution<'a>, Solution<'a>) {
+    ) -> Vec<Solution<'a>> {
         let mut child1 = parent1.clone();
         let mut child2 = parent2.clone();
     
@@ -440,7 +440,7 @@ impl<'a> CrossoverManager<'a> {
         child2.evaluated = false;
         child2.feasible = false;
     
-        (child1, child2)
+        vec![child1, child2]
     }
 }
 
@@ -653,7 +653,7 @@ mod tests {
             evaluated: false,
         };
         let cm = CrossoverManager::new();
-        let (child1, child2) = cm.perform_crossover(&parent1, &parent2);
+        let children = cm.perform_crossover(&parent1, &parent2);
         // print the parent and children solutions
         // println!("Parent1: {:?}", parent1.solution);
         // println!("Parent2: {:?}", parent2.solution);
@@ -661,8 +661,8 @@ mod tests {
         // println!("Child2: {:?}", child2.solution);
         // assert that the crossover was successful
 
-        assert_ne!(child1.solution, parent1.solution);
-        assert_ne!(child2.solution, parent2.solution);
+        assert_ne!(children[0].solution, parent1.solution);
+        assert_ne!(children[1].solution, parent2.solution);
     }// Define a problem with both `Integer` and `BitBinary` types
 
 

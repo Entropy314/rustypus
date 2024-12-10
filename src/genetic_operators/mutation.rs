@@ -37,24 +37,46 @@ impl<'a> MutationManager<'a> {
     }
 
     /// Applies mutations to the parent solution and returns the mutated child
+    // pub fn mutate(&self, parent: &'a Solution<'a>) -> Solution<'a> {
+    //     let mut child = parent.clone();
+
+    //     for (i, solution_type) in parent.problem.solution_data_types.iter().enumerate() {
+    //         let mutation = self.custom_mutations.get(&i).cloned().or_else(|| {
+    //             match solution_type {
+    //                 SolutionDataTypes::BitBinary(_) => self.default_mutations.get("BitBinary").cloned(),
+    //                 SolutionDataTypes::Real(_) => self.default_mutations.get("Real").cloned(),
+    //                 SolutionDataTypes::Integer(_) => self.default_mutations.get("Integer").cloned(),
+    //                 _ => None,
+    //             }
+    //         });
+
+    //         if let Some(mutation) = mutation {
+    //             child.solution[i] = mutation.mutate(parent, i);
+    //         }
+    //     }
+
+    //     child.feasible = false;
+    //     child.evaluated = false;
+    //     child
+    // }
     pub fn mutate(&self, parent: &'a Solution<'a>) -> Solution<'a> {
         let mut child = parent.clone();
-
         for (i, solution_type) in parent.problem.solution_data_types.iter().enumerate() {
-            let mutation = self.custom_mutations.get(&i).cloned().or_else(|| {
-                match solution_type {
+            let mutation = self
+                .custom_mutations
+                .get(&i)
+                .cloned()
+                .or_else(|| match solution_type {
                     SolutionDataTypes::BitBinary(_) => self.default_mutations.get("BitBinary").cloned(),
                     SolutionDataTypes::Real(_) => self.default_mutations.get("Real").cloned(),
                     SolutionDataTypes::Integer(_) => self.default_mutations.get("Integer").cloned(),
                     _ => None,
-                }
-            });
+                });
 
             if let Some(mutation) = mutation {
                 child.solution[i] = mutation.mutate(parent, i);
             }
         }
-
         child.feasible = false;
         child.evaluated = false;
         child
